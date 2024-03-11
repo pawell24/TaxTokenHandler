@@ -154,7 +154,7 @@ contract UniswapFirstBuyHandling is Ownable {
         );
         require(userEthContribution > 0, "No ETH contribution");
         require(
-            tokensWithdrawn[msg.sender] == true,
+            tokensWithdrawn[msg.sender] == false,
             "Tokens have been paid out"
         );
 

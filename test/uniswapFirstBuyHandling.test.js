@@ -60,6 +60,8 @@ describe("UniswapFirstBuyHandling", function () {
       router,
       uniswapFirstBuy
     );
+
+    await uniswapFirstBuyHandling.setTokenAddress(fairToken);
   });
 
   describe("FairToken Deployment", function () {
@@ -71,36 +73,43 @@ describe("UniswapFirstBuyHandling", function () {
 
   describe("Buy Tokens Uniswap First Buy", function () {
     it("Should allow the owner to launch the token and add liquidity", async function () {
-      // await mockAllowlist.addToAllowlist(addys.map(a => a.address));
+      await addr1.sendTransaction({
+        to: uniswapFirstBuy,
+        value: ethers.parseEther("0.5"),
+      });
 
-      for (let i = 0; i < addrs.length; i++) {
-        addy = addrs[i];
-        await addy.sendTransaction({
-          to: uniswapFirstBuyHandling,
-          value: ethers.parseEther("0.1"),
-        });
-      }
-      // Close the contribution window
-      // await uniswapFirstBuy.setIsOpen(false);
+      await addr2.sendTransaction({
+        to: uniswapFirstBuy,
+        value: ethers.parseEther("0.5"),
+      });
 
-      // Launch the token
-      let numTokens = ethers.parseEther("1000000");
-      await fairToken.connect(owner).approve(uniswapFirstBuy, numTokens);
-      let ethAmountToAdd = ethers.parseEther("1"); // 8 ETH
+      await owner.sendTransaction({
+        to: uniswapFirstBuyHandling,
+        value: ethers.parseEther("1"),
+      });
 
-      // await token.transferOwnership(uniswapFirstBuy.address);
+      let numTokens = ethers.parseEther("0.000000001");
+      await fairToken
+        .connect(owner)
+        .approve(uniswapFirstBuyHandling, numTokens);
+      let ethAmountToAdd = ethers.parseEther("1");
 
-      console.log({ numTokens, ethAmountToAdd, router });
+      await fairToken.transferOwnership(uniswapFirstBuyHandling);
 
       await uniswapFirstBuyHandling.launchToken(numTokens, {
         value: ethAmountToAdd,
       });
 
-      // await uniswapFirstBuy.connect(addr1).withdrawTokens();
-      // console.log("got tokens", await token.balanceOf(addr1));
+      await uniswapFirstBuyHandling.connect(addr1).withdrawTokens();
+      console.log("got tokens", await fairToken.balanceOf(addr1));
 
-      // // Check if liquidity was added
-      // expect(await uniswapFirstBuy.isLiquidityAdded()).to.be.true;
+      expect(await fairToken.balanceOf(addr1)).to.be.above(0);
+
+      expect(await uniswapFirstBuyHandling.isLiquidityAdded()).to.be.true;
+
+      await expect(
+        uniswapFirstBuyHandling.connect(addr1).withdrawTokens()
+      ).to.be.revertedWith("Tokens have been paid out");
     });
   });
 });
