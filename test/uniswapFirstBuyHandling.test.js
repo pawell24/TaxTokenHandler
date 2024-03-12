@@ -3,7 +3,6 @@ const { ethers } = require("hardhat");
 const factoryArtifact = require("@uniswap/v2-core/build/UniswapV2Factory.json");
 const routerArtifact = require("@uniswap/v2-periphery/build/UniswapV2Router02.json");
 const pairArtifact = require("@uniswap/v2-periphery/build/IUniswapV2Pair.json");
-const { Contract } = require("ethers");
 
 async function deployUniswapContracts(owner) {
   const WETH = await ethers.getContractFactory("WETH9");
@@ -110,6 +109,46 @@ describe("UniswapFirstBuyHandling", function () {
       await expect(
         uniswapFirstBuyHandling.connect(addr1).withdrawTokens()
       ).to.be.revertedWith("Tokens have been paid out");
+    });
+  });
+
+  describe("Emergency Withdraw", function () {
+    it("Should only be callable by the owner", async function () {
+      await expect(
+        uniswapFirstBuyHandling.connect(addr1).emergencyWithdraw()
+      ).to.be.revertedWithCustomError(
+        uniswapFirstBuyHandling,
+        "OwnableUnauthorizedAccount"
+      );
+    });
+
+    it("Should transfer the entire balance to the owner", async function () {
+      const initialOwnerBalance = await ethers.provider.getBalance(
+        owner.address
+      );
+      const sendValue = ethers.parseEther("0.5");
+      await owner.sendTransaction({
+        to: uniswapFirstBuyHandling,
+        value: sendValue,
+      });
+
+      const initialContractBalance = await ethers.provider.getBalance(
+        uniswapFirstBuyHandling
+      );
+      expect(initialContractBalance).to.equal(sendValue);
+
+      await uniswapFirstBuyHandling.connect(owner).emergencyWithdraw();
+
+      const finalContractBalance = await ethers.provider.getBalance(
+        uniswapFirstBuyHandling
+      );
+      expect(finalContractBalance).to.equal(0);
+
+      const finalOwnerBalance = await ethers.provider.getBalance(owner);
+      expect(finalOwnerBalance).to.be.closeTo(
+        initialOwnerBalance,
+        ethers.parseEther("0.01")
+      );
     });
   });
 });
