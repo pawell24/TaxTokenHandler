@@ -100,10 +100,12 @@ contract UniswapFirstBuyHandling is Ownable {
 
     constructor(
         address uniswapAddress,
-        address firstBuyContractAddress
+        address firstBuyContractAddress,
+        address tokenAddress
     ) Ownable(msg.sender) {
         uniswapV2Router = IUniswapV2Router02(uniswapAddress);
         uniswapFirstBuyContract = IUniswapFirstBuy(firstBuyContractAddress);
+        token = ITaxToken(tokenAddress);
     }
 
     function setTokenAddress(address addr) public onlyOwner {

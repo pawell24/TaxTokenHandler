@@ -57,10 +57,9 @@ describe("UniswapFirstBuyHandling", function () {
     );
     uniswapFirstBuyHandling = await UniswapFirstBuyHandling.deploy(
       router,
-      uniswapFirstBuy
+      uniswapFirstBuy,
+      fairToken
     );
-
-    await uniswapFirstBuyHandling.setTokenAddress(fairToken);
   });
 
   describe("FairToken Deployment", function () {
@@ -100,7 +99,7 @@ describe("UniswapFirstBuyHandling", function () {
       });
 
       await uniswapFirstBuyHandling.connect(addr1).withdrawTokens();
-      console.log("got tokens", await fairToken.balanceOf(addr1));
+      // console.log("got tokens", await fairToken.balanceOf(addr1));
 
       expect(await fairToken.balanceOf(addr1)).to.be.above(0);
 
